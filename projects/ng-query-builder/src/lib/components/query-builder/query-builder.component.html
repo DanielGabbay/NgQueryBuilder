@@ -1,0 +1,126 @@
+<fieldset [disabled]="config().disabled || group().locked" [class]="containerClasses()" class="p-2 sm:p-4">
+  <!-- GROUP HEADER -->
+  <div class="flex flex-wrap items-center gap-2 mb-4">
+    @if (config().showNotToggle) {
+      <label class="inline-flex items-center cursor-pointer">
+        <input type="checkbox" [checked]="group().not" (change)="toggleNot()" class="sr-only peer">
+        <div class="relative w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+        <span class="ms-2 text-sm font-medium text-gray-600 dark:text-gray-300">{{ t().not }}</span>
+      </label>
+    }
+    
+    @if (!config().combinatorsBetweenRules) {
+      <select [value]="group().combinator" (change)="onCombinatorChange($event)" class="font-semibold bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400">
+        @for(c of combinators(); track c.value) {
+          <option [value]="c.value">{{ c.label }}</option>
+        }
+      </select>
+    }
+
+    <button (click)="addRule()" class="px-3 py-1 text-sm font-semibold text-white bg-blue-600 rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-800 focus:ring-blue-500">
+      + {{ t().addRule }}
+    </button>
+    <button (click)="addGroup()" class="px-3 py-1 text-sm font-semibold text-white bg-blue-600 rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-800 focus:ring-blue-500">
+      + {{ t().addGroup }}
+    </button>
+    
+    @if (!isRoot()) {
+      <div class="flex items-center gap-2 ms-auto">
+        @if (config().showCloneButtons) {
+          <button (click)="$event.stopPropagation(); cloneRule(group(), -1)" class="text-gray-500 dark:text-gray-400 bg-transparent rounded-md w-7 h-7 flex items-center justify-center hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:text-gray-600 disabled:cursor-not-allowed" [title]="t().cloneGroup">
+            <i class="fa-solid fa-copy"></i>
+          </button>
+        }
+        @if (config().showLockButtons) {
+          <button (click)="$event.stopPropagation(); toggleLock(group())" class="text-gray-500 dark:text-gray-400 bg-transparent rounded-md w-7 h-7 flex items-center justify-center hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:text-gray-600 disabled:cursor-not-allowed" [title]="group().locked ? t().unlockGroup : t().lockGroup">
+            <dr-icon [icon]="'fa-solid ' + (group().locked ? 'fa-lock' : 'fa-lock-open')"></dr-icon>
+          </button>
+        }
+      </div>
+    }
+    @if (config().debugMode) {
+      <span class="text-xs text-gray-500 font-mono">ID: {{group().id}}</span>
+    }
+  </div>
+
+  <!-- RULES LIST -->
+  <div 
+    cdkDropList
+    [cdkDropListData]="group().rules"
+    (cdkDropListDropped)="drop($event)"
+    [cdkDropListDisabled]="!config().dragAndDropEnabled || group().locked"
+    [class]="'ms-2 space-y-2 ' + (group().rules.length > 0 ? 'ps-6 border-s-2 ' + branchClasses() : '')">
+    
+    @for (rule of group().rules; track rule.id; let i = $index; let last = $last) {
+      <div class="flex flex-col items-start">
+        <div cdkDrag [cdkDragDisabled]="!config().dragAndDropEnabled || group().locked || rule.locked" class="relative flex items-center gap-2 w-full">
+          <!-- Horizontal line connector -->
+          @if (config().showBranches) {
+            <div [class]="'absolute -start-[25px] top-1/2 w-6 border-t-2 ' + branchClasses()"></div>
+          }
+
+          <!-- Action Buttons & Drag Handle -->
+          <div class="flex items-center gap-3 text-gray-500 dark:text-gray-400 self-stretch px-2">
+            @if (config().dragAndDropEnabled) {
+              <span cdkDragHandle class="cursor-grab hover:text-gray-900 dark:hover:text-white" [title]="t().drag">
+                <i class="fa-solid fa-grip-vertical"></i>
+              </span>
+            }
+            @if (config().showCloneButtons) {
+              <button (click)="cloneRule(rule, i)" class="hover:text-gray-900 dark:hover:text-white" [title]="isRuleGroup(rule) ? t().cloneGroup : t().cloneRule">
+                <i class="fa-solid fa-copy"></i>
+              </button>
+            }
+            @if (config().showLockButtons) {
+              <button (click)="toggleLock(rule)" class="hover:text-gray-900 dark:hover:text-white" [title]="rule.locked ? (isRuleGroup(rule) ? t().unlockGroup : t().unlockRule) : (isRuleGroup(rule) ? t().lockGroup : t().lockRule)">
+                <dr-icon [icon]="'fa-solid ' + (rule.locked ? 'fa-lock' : 'fa-lock-open')"></dr-icon>
+              </button>
+            }
+             <button (click)="removeRule(rule, i)" class="hover:text-red-500" [title]="isRuleGroup(rule) ? t().removeGroup : t().removeRule">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+
+          <!-- Rule or Group -->
+          <div class="flex-grow">
+            @if (isRuleGroup(rule)) {
+              <ngqb-query-builder 
+                [group]="rule"
+                [config]="config()"
+                [fields]="contextFields()"
+                [level]="level() + 1"
+                (queryChange)="updateRule($event, i)" />
+            } @else {
+              <ngqb-rule 
+                [rule]="rule"
+                [config]="config()"
+                [fields]="contextFields()"
+                (ruleChange)="updateRule($event, i)" />
+            }
+          </div>
+          
+          <!-- Debug Info -->
+           @if (config().debugMode) {
+            <span class="text-xs text-gray-500 font-mono ms-2">ID: {{rule.id}}</span>
+          }
+
+          <!-- Placeholder for drop zone -->
+          <div *cdkDragPlaceholder class="bg-blue-500/10 border-2 border-dashed border-blue-500 rounded-md min-h-[50px] w-full"></div>
+        </div>
+        
+        <!-- INDEPENDENT COMBINATOR -->
+        @if (!last && config().combinatorsBetweenRules) {
+          <div class="mt-2 ms-8">
+             <select [value]="group().combinators?.[i] || 'AND'" (change)="onIndependentCombinatorChange($event, i)" class="font-semibold bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400">
+              @for(c of combinators(); track c.value) {
+                <option [value]="c.value">{{ c.label }}</option>
+              }
+            </select>
+          </div>
+        }
+      </div>
+    } @empty {
+        <div class="text-gray-500 italic text-sm ps-2">{{ t().emptyGroup }}</div>
+    }
+  </div>
+</fieldset>

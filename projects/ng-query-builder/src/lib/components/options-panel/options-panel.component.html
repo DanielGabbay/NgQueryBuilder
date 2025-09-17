@@ -1,0 +1,32 @@
+<aside class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg h-fit">
+    <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">{{ t().options }}</h2>
+
+    <!-- Theme Toggle -->
+    <div class="flex items-center justify-between p-3 rounded-lg bg-gray-100 dark:bg-gray-900/50 mb-6">
+    <h3 class="font-semibold text-gray-900 dark:text-gray-100">Theme</h3>
+    <div class="flex items-center gap-3">
+        <i class="fa-solid fa-sun text-lg text-yellow-500"></i>
+        <label class="inline-flex items-center cursor-pointer">
+        <input type="checkbox" [checked]="theme() === 'dark'" (change)="toggleTheme()" class="sr-only peer">
+        <div class="relative w-11 h-6 bg-gray-300 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+        </label>
+        <i class="fa-solid fa-moon text-lg text-blue-400"></i>
+    </div>
+    </div>
+    
+    <!-- Config Options -->
+    <div class="space-y-4">
+    @for(option of configOptions(); track option.key) {
+        <label 
+        class="flex items-center justify-between gap-4 cursor-pointer p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+        [title]="option.info">
+        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ option.label }}</span>
+        <input 
+            type="checkbox" 
+            [checked]="config()[option.key]" 
+            (change)="updateConfig(option.key, $event)" 
+            class="h-4 w-4 rounded bg-white border-gray-400 text-blue-600 focus:ring-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 shrink-0">
+        </label>
+    }
+    </div>
+</aside>
