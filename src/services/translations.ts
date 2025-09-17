@@ -26,6 +26,7 @@ export const translations = {
     unlockGroup: 'Unlock Group',
     shiftUp: 'Shift Up',
     shiftDown: 'Shift Down',
+    drag: 'Drag to reorder',
     emptyGroup: 'No rules in this group. Add a rule or group to get started.',
 
     // Query Preview Component
@@ -41,13 +42,22 @@ export const translations = {
     fieldBirthDate: 'Birth Date',
     fieldIsMusician: 'Is a musician',
     fieldPrimaryInstrument: 'Primary instrument',
-    fieldCustomerAge: 'Customer Age',
-    fieldCustomerType: 'Customer Type',
-    fieldOrderTotal: 'Order Total',
+    fieldGender: 'Gender',
+    fieldNotes: 'Notes',
     fieldItemTable: 'Item Table',
     fieldItemName: 'Item Name',
     fieldUnitPrice: 'Unit Price',
     fieldAmount: 'Amount',
+
+    // Field Options
+    instrumentGuitar: 'Guitar',
+    instrumentPiano: 'Piano',
+    instrumentDrums: 'Drums',
+    instrumentBass: 'Bass',
+    instrumentViolin: 'Violin',
+    genderMale: 'Male',
+    genderFemale: 'Female',
+    genderOther: 'Other',
     
     // Operators - keys match operatorDefs in query-data.service
     opEquals: '=',
@@ -158,6 +168,7 @@ export const translations = {
     unlockGroup: 'שחרר קבוצה',
     shiftUp: 'הזז למעלה',
     shiftDown: 'הזז למטה',
+    drag: 'גרור לסידור מחדש',
     emptyGroup: 'אין חוקים בקבוצה זו. יש להוסיף חוק או קבוצה כדי להתחיל.',
 
     // Query Preview Component
@@ -173,13 +184,22 @@ export const translations = {
     fieldBirthDate: 'תאריך לידה',
     fieldIsMusician: 'האם מוזיקאי',
     fieldPrimaryInstrument: 'כלי נגינה עיקרי',
-    fieldCustomerAge: 'גיל לקוח',
-    fieldCustomerType: 'סוג לקוח',
-    fieldOrderTotal: 'סך הכל הזמנה',
+    fieldGender: 'מגדר',
+    fieldNotes: 'הערות',
     fieldItemTable: 'טבלת פריטים',
     fieldItemName: 'שם פריט',
     fieldUnitPrice: 'מחיר יחידה',
     fieldAmount: 'כמות',
+
+    // Field Options
+    instrumentGuitar: 'גיטרה',
+    instrumentPiano: 'פסנתר',
+    instrumentDrums: 'תופים',
+    instrumentBass: 'בס',
+    instrumentViolin: 'כינור',
+    genderMale: 'זכר',
+    genderFemale: 'נקבה',
+    genderOther: 'אחר',
     
     // Operators
     opEquals: '=',

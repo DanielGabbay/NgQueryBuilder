@@ -4,12 +4,13 @@ import { isRuleGroup, Rule, RuleGroup } from '../../models/query-builder.models'
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import { TranslationService } from '../../services/translation.service';
 import { AppConfig } from '../../app.component';
+import { IconComponent } from '../icon/icon.component';
 
 @Component({
   selector: 'app-query-builder',
   templateUrl: './query-builder.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [QueryBuilderComponent, RuleComponent, DragDropModule],
+  imports: [QueryBuilderComponent, RuleComponent, DragDropModule, IconComponent],
 })
 export class QueryBuilderComponent {
   group = input.required<RuleGroup>();
@@ -150,9 +151,30 @@ export class QueryBuilderComponent {
     this.queryChange.emit({ ...this.group(), rules, combinators });
   }
 
-  toggleLock(item: Rule | RuleGroup) {
-      item.locked = !item.locked;
-      this.queryChange.emit({ ...this.group() });
+  toggleLock(itemToToggle: Rule | RuleGroup) {
+    const currentGroup = this.group();
+    
+    // Case 1: Toggling the lock on the component's own group
+    if (itemToToggle === currentGroup) {
+      this.queryChange.emit({ 
+        ...currentGroup, 
+        locked: !currentGroup.locked 
+      });
+      return;
+    }
+  
+    // Case 2: Toggling the lock on a rule or subgroup within this group's rules array
+    const newRules = currentGroup.rules.map(rule => {
+      if (rule === itemToToggle) {
+        // Create a new object for the matched rule with the toggled 'locked' property
+        return { ...rule, locked: !rule.locked };
+      }
+      // Return all other rules unchanged
+      return rule;
+    });
+  
+    // Emit the change with a new group object containing the new rules array
+    this.queryChange.emit({ ...currentGroup, rules: newRules });
   }
 
   toggleNot() {

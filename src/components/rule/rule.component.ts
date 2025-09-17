@@ -23,11 +23,6 @@ export class RuleComponent {
     const ruleField = this.rule().field;
     // Find in top-level fields first
     let field = this.fields().find(f => f.value === ruleField);
-    // If not found, it might be a column in a table (for initial load)
-    // This part is less critical as UI flow prevents this, but good for robustness
-    if (!field) {
-        // This logic is complex and might not be needed if initial state is always valid
-    }
     return field;
   });
   
@@ -56,6 +51,11 @@ export class RuleComponent {
     return this.queryDataService.getOperatorsForField(field.type);
   });
   
+  showValueInput = computed(() => {
+    const operator = this.rule().operator;
+    return !['isNull', 'isNotNull', 'isEmpty', 'isNotEmpty', 'isTrue', 'isFalse'].includes(operator);
+  });
+  
   onFieldChange(event: Event) {
     const selectElement = event.target as HTMLSelectElement;
     const field = this.fields().find(f => f.value === selectElement.value);
@@ -80,11 +80,13 @@ export class RuleComponent {
 
     } else {
       const newOperators = this.queryDataService.getOperatorsForField(field.type);
+      const newOperator = resetOnFieldChange ? newOperators[0].value : this.rule().operator;
+
       this.ruleChange.emit({
         ...this.rule(),
         field: field.value,
-        operator: resetOnFieldChange ? newOperators[0].value : this.rule().operator,
-        value: resetOnFieldChange ? this.defaultValueForType(field.type, newOperators[0].value) : this.rule().value,
+        operator: newOperator,
+        value: resetOnFieldChange ? this.defaultValueForType(field, newOperator) : this.rule().value,
         aggregation: undefined, // Clear aggregation fields
         column: undefined
       });
@@ -103,8 +105,8 @@ export class RuleComponent {
 
   onOperatorChange(event: Event) {
     const operator = (event.target as HTMLSelectElement).value;
-    const currentType = this.selectedField()?.type;
-    const value = this.defaultValueForType(currentType, operator);
+    const field = this.selectedField();
+    const value = this.defaultValueForType(field, operator);
     this.ruleChange.emit({ ...this.rule(), operator, value });
   }
 
@@ -123,6 +125,12 @@ export class RuleComponent {
     this.ruleChange.emit({ ...this.rule(), value: value });
   }
 
+  onMultiSelectValueChange(event: Event) {
+    const selectedOptions = (event.target as HTMLSelectElement).selectedOptions;
+    const value = Array.from(selectedOptions).map(opt => opt.value);
+    this.ruleChange.emit({ ...this.rule(), value });
+  }
+
   onBetweenValueChange(event: Event, index: 0 | 1) {
     const inputElement = event.target as HTMLInputElement;
     const currentValue = Array.isArray(this.rule().value) ? [...this.rule().value] : ['', ''];
@@ -130,18 +138,20 @@ export class RuleComponent {
     this.ruleChange.emit({ ...this.rule(), value: currentValue });
   }
 
-  private defaultValueForType(type: FieldType | undefined, operator: string): any {
-    if (!this.config().autoSelectValue) return undefined;
+  private defaultValueForType(field: Field | undefined, operator: string): any {
+    if (!this.config().autoSelectValue || !field) return undefined;
 
     if (operator === 'between') {
-      return type === 'date' ? ['', ''] : [0, 0];
+      return field.type === 'date' ? ['', ''] : [0, 0];
     }
     if (operator === 'in' || operator === 'notIn') {
-      return '';
+      return field.options && field.options.length > 0 ? [] : '';
     }
-    switch(type) {
+    switch(field.type) {
       case 'number': return 0;
       case 'boolean': return true;
+      case 'select':
+        return field.options?.[0]?.value ?? '';
       default: return '';
     }
   }

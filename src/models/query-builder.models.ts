@@ -1,4 +1,4 @@
-export type FieldType = 'string' | 'number' | 'boolean' | 'date' | 'table' | 'select';
+export type FieldType = 'string' | 'number' | 'boolean' | 'date' | 'table' | 'select' | 'textarea';
 
 export type AggregationType = 'sum' | 'count' | 'avg' | 'min' | 'max';
 //'any' | 'all' | 'none' will be supported later
@@ -34,6 +34,7 @@ export interface Field {
   values?: any[]; // Sample/available values
   operators?: string[];
   options?: { value: any; label: string }[];
+  inputType?: 'radio';
 }
 
 export interface Operator {

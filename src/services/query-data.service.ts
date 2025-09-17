@@ -13,7 +13,8 @@ interface FieldDefinition {
   type: FieldType;
   group?: string;
   values?: any[];
-  options?: {value: any, label: string}[];
+  options?: {value: any, labelKey: string}[];
+  inputType?: 'radio';
 }
 
 @Injectable({
@@ -34,12 +35,25 @@ export class QueryDataService {
       labelKey: 'fieldPrimaryInstrument', 
       type: 'select',
       options: [
-        { value: 'Guitar', label: 'Guitar' },
-        { value: 'Piano', label: 'Piano' },
-        { value: 'Drums', label: 'Drums' },
-        { value: 'Bass', label: 'Bass' },
+        { value: 'Guitar', labelKey: 'instrumentGuitar' },
+        { value: 'Piano', labelKey: 'instrumentPiano' },
+        { value: 'Drums', labelKey: 'instrumentDrums' },
+        { value: 'Bass', labelKey: 'instrumentBass' },
+        { value: 'Violin', labelKey: 'instrumentViolin' },
       ]
     },
+    {
+      value: 'gender',
+      labelKey: 'fieldGender',
+      type: 'select',
+      inputType: 'radio',
+      options: [
+        { value: 'Male', labelKey: 'genderMale' },
+        { value: 'Female', labelKey: 'genderFemale' },
+        { value: 'Other', labelKey: 'genderOther' },
+      ]
+    },
+    { value: 'notes', labelKey: 'fieldNotes', type: 'textarea' },
     { value: "prod1", labelKey: "fieldItemTable", type: "table" },
     { labelKey: "fieldItemName", value: "item_name", type: "string", group: "prod1", values: ["קולה", "נייר טוואלט", "חלב"] },
     { labelKey: "fieldUnitPrice", value: "unit_price", type: "number", group: "prod1", values: [10, 20, 30] },
@@ -69,23 +83,43 @@ export class QueryDataService {
     const t = this.t();
     return defs.map(d => ({ ...d, label: t[d.labelKey as keyof typeof t] || d.labelKey }));
   }
+  
+  // FIX: Added explicit return type for better type safety.
+  private translateOptions(options: {value: any, labelKey: string}[] | undefined): { value: any, label: string }[] | undefined {
+      if (!options) return undefined;
+      const t = this.t();
+      return options.map(opt => ({...opt, label: t[opt.labelKey as keyof typeof t] || opt.labelKey}));
+  }
+
+  // FIX: Created a helper to translate a FieldDefinition to a Field, handling both top-level label and nested options labels.
+  private translateField(fieldDef: FieldDefinition): Field {
+    const t = this.t();
+    // The spread operator `...fieldDef` correctly carries over all properties.
+    // We then explicitly add the translated `label` and `options`.
+    // The original `labelKey` is still present but TypeScript's structural typing
+    // allows assignment to `Field` as long as all of `Field`'s properties are present and correctly typed.
+    return {
+      ...fieldDef,
+      label: t[fieldDef.labelKey as keyof typeof t] || fieldDef.labelKey,
+      options: this.translateOptions(fieldDef.options)
+    };
+  }
 
   // PUBLIC API
   fields = computed<Field[]>(() => {
-    const t = this.t();
+    // FIX: Refactored to use the new translateField helper for consistency and to remove duplicated logic.
     return this.fieldDefs
       .filter(f => !f.group)
-      .map(d => ({ 
-        ...d, 
-        label: t[d.labelKey as keyof typeof t] || d.labelKey,
-        options: d.options?.map(opt => ({ ...opt, label: t[opt.label as keyof typeof t] || opt.label}))
-      }));
+      .map(d => this.translateField(d));
   });
   
   aggregationOperators = computed<Operator[]>(() => this.translateDefs(this.aggregationOperatorDefs));
   
+  // FIX: Corrected implementation to properly translate column definitions, including their `options` property, which was causing a type error. This now uses the `translateField` helper.
   getColumnsForTable(tableCode: string): Field[] {
-    return this.translateDefs(this.fieldDefs.filter(f => f.group === tableCode));
+    return this.fieldDefs
+      .filter(f => f.group === tableCode)
+      .map(d => this.translateField(d));
   }
 
   getOperatorsForField(fieldType: FieldType): Operator[] {
@@ -96,6 +130,7 @@ export class QueryDataService {
     switch (fieldType) {
       case 'string':
       case 'select':
+      case 'textarea':
         return translatedOperators.filter(o => 
           [...comparison, 'contains', 'startsWith', 'endsWith', 'in', 'notIn', ...nullChecks].includes(o.value)
         );
@@ -108,7 +143,7 @@ export class QueryDataService {
           [...comparison, 'between', ...nullChecks].includes(o.value)
         );
       case 'boolean':
-        return translatedOperators.filter(o => ['=', '!='].includes(o.value));
+        return translatedOperators.filter(o => ['=', '!=', 'isTrue', 'isFalse'].includes(o.value));
       case 'table':
         return translatedOperators.filter(o => 
           [...comparison, 'between', 'in', 'notIn'].includes(o.value)

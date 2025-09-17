@@ -4,6 +4,7 @@ import { Rule, RuleGroup } from './models/query-builder.models';
 import { TranslationService, Language } from './services/translation.service';
 import { OptionsPanelComponent } from './components/options-panel/options-panel.component';
 import { QueryPreviewComponent } from './components/query-preview/query-preview.component';
+import { localSignal } from './utils/local-signal';
 
 export interface AppConfig {
   addRuleToNewGroups: boolean;
@@ -42,7 +43,7 @@ export class AppComponent {
   t = this.translationService.t;
   private renderer = inject(Renderer2);
   
-  theme = signal<'dark' | 'light'>('dark');
+  theme = localSignal<'dark' | 'light'>('dark', 'query-builder-theme');
 
   initialQuery: RuleGroup = {
     id: 'root',
@@ -51,21 +52,22 @@ export class AppComponent {
       { id: 'r-1', field: 'firstName', operator: 'startsWith', value: 'Stev' },
       { id: 'r-2', field: 'lastName', operator: 'in', value: 'Vai, Vaughan' },
       { id: 'r-3', field: 'age', operator: '>', value: 28 },
+      { id: 'r-7', field: 'gender', operator: '=', value: 'Female' },
       {
         id: 'g-1',
         combinator: 'OR',
         not: false,
         rules: [
           { id: 'r-4', field: 'isMusician', operator: '=', value: true },
-          { id: 'r-5', field: 'primaryInstrument', operator: '=', value: 'Guitar' },
+          { id: 'r-5', field: 'primaryInstrument', operator: 'in', value: ['Guitar', 'Piano'] },
         ],
       },
        { id: 'r-6', field: 'birthDate', operator: 'between', value: ['1954-10-03', '1960-06-06'] },
     ],
-    combinators: ['AND', 'AND', 'AND', 'AND']
+    combinators: ['AND', 'AND', 'AND', 'AND', 'AND']
   };
 
-  config: WritableSignal<AppConfig> = signal({
+  private readonly initialConfig: AppConfig = {
     addRuleToNewGroups: false,
     autoSelectField: true,
     autoSelectOperator: true,
@@ -88,12 +90,13 @@ export class AppComponent {
     suppressStandardClasses: false,
     useDateTimePackage: true,
     useValidation: true,
-  });
+  };
+
+  config: WritableSignal<AppConfig> = localSignal<AppConfig>(this.initialConfig, 'query-builder-config');
   
   configOptions = computed(() => {
-    const config = this.config();
     const translations = this.t();
-    return (Object.keys(config) as (keyof AppConfig)[]).map(key => {
+    return (Object.keys(this.initialConfig) as (keyof AppConfig)[]).map(key => {
         const labelKey = key as keyof typeof translations;
         const infoKey = `${key}Info` as keyof typeof translations;
         return {

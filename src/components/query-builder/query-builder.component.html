@@ -33,7 +33,7 @@
         }
         @if (config().showLockButtons) {
           <button (click)="$event.stopPropagation(); toggleLock(group())" class="text-gray-500 dark:text-gray-400 bg-transparent rounded-md w-7 h-7 flex items-center justify-center hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:text-gray-600 disabled:cursor-not-allowed" [title]="group().locked ? t().unlockGroup : t().lockGroup">
-            <i class="fa-solid" [class]="group().locked ? 'fa-lock' : 'fa-lock-open'"></i>
+            <dr-icon [icon]="'fa-solid ' + (group().locked ? 'fa-lock' : 'fa-lock-open')"></dr-icon>
           </button>
         }
       </div>
@@ -73,7 +73,7 @@
             }
             @if (config().showLockButtons) {
               <button (click)="toggleLock(rule)" class="hover:text-gray-900 dark:hover:text-white" [title]="rule.locked ? (isRuleGroup(rule) ? t().unlockGroup : t().unlockRule) : (isRuleGroup(rule) ? t().lockGroup : t().lockRule)">
-                <i class="fa-solid" [class]="rule.locked ? 'fa-lock' : 'fa-lock-open'"></i>
+                <dr-icon [icon]="'fa-solid ' + (rule.locked ? 'fa-lock' : 'fa-lock-open')"></dr-icon>
               </button>
             }
              <button (click)="removeRule(rule, i)" class="hover:text-red-500" [title]="isRuleGroup(rule) ? t().removeGroup : t().removeRule">
