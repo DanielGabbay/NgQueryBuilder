@@ -5,12 +5,13 @@ import { AppConfig } from '../../app.component';
 import { TranslationService } from '../../services/translation.service';
 import { QueryBuilderComponent } from '../query-builder/query-builder.component';
 import { ExpressionBuilderComponent } from '../expression-builder/expression-builder.component';
+import { RuleValueInputComponent } from '../rule-value-input/rule-value-input.component';
 
 @Component({
   selector: 'app-rule',
   templateUrl: './rule.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [forwardRef(() => QueryBuilderComponent), ExpressionBuilderComponent], // For nested builder
+  imports: [forwardRef(() => QueryBuilderComponent), ExpressionBuilderComponent, RuleValueInputComponent], // For nested builder
 })
 export class RuleComponent {
   rule = input.required<Rule>();
@@ -52,6 +53,13 @@ export class RuleComponent {
   // Aggregation operators if a table is selected
   aggregationOperators: Signal<Operator[]> = this.queryDataService.aggregationOperators;
   arithmeticOperators: Signal<Operator[]> = this.queryDataService.arithmeticOperators;
+  
+  // A dummy field to represent the numeric output of an aggregation for the value input component.
+  aggregationResultField: Signal<Field> = computed(() => ({
+      value: 'aggregationResult',
+      label: 'Aggregation Result',
+      type: 'number',
+  }));
 
   quantifiers = computed(() => [
     { value: 'all', label: this.t().quantifierAll },
@@ -85,8 +93,105 @@ export class RuleComponent {
 
   // Fields available for field-to-field comparison
   comparisonFields = computed(() => {
-    const currentFieldType = this.selectedField()?.type;
+    const selectedField = this.selectedField();
+    let currentFieldType: FieldType | undefined = selectedField?.type;
+
+    if (selectedField?.type === 'table' && this.rule().tableRuleType !== 'rowCondition') {
+      // The result of an aggregation (sum, count, etc.) is a number.
+      // Therefore, we should allow comparison with other numeric fields.
+      currentFieldType = 'number';
+    }
+    
+    if (!currentFieldType) return [];
+    
     return this.fields().filter(f => f.type === currentFieldType && f.value !== this.rule().field);
+  });
+
+  groupedFields = computed(() => {
+    const fields = this.fields();
+    if (!fields) return [];
+
+    const groups: { [key: string]: Field[] } = {};
+
+    for (const field of fields) {
+      const type = field.type;
+      if (!groups[type]) {
+        groups[type] = [];
+      }
+      groups[type].push(field);
+    }
+
+    const groupOrder: FieldType[] = ['string', 'textarea', 'number', 'date', 'boolean', 'select', 'table'];
+    
+    const t = this.t();
+    const groupLabels: {[key: string]: string} = {
+      'string': t.fieldTypeString,
+      'textarea': t.fieldTypeTextArea,
+      'number': t.fieldTypeNumber,
+      'date': t.fieldTypeDate,
+      'boolean': t.fieldTypeBoolean,
+      'select': t.fieldTypeSelect,
+      'table': t.fieldTypeTable,
+    };
+
+    const sortedGroups: { name: string, fields: Field[] }[] = [];
+    for (const groupName of groupOrder) {
+      if (groups[groupName]) {
+        sortedGroups.push({ name: groupLabels[groupName] || this.capitalize(groupName), fields: groups[groupName] });
+      }
+    }
+    
+    // Add any other groups that might not be in groupOrder
+    for (const groupName in groups) {
+      if (!groupOrder.includes(groupName as FieldType)) {
+        sortedGroups.push({ name: groupLabels[groupName] || this.capitalize(groupName), fields: groups[groupName] });
+      }
+    }
+
+    return sortedGroups;
+  });
+
+  groupedAvailableOperators = computed(() => {
+    const operators = this.availableOperators();
+    if (operators.length === 0) return [];
+
+    const t = this.t();
+    const groupLabels: {[key: string]: string} = {
+      'Comparison': t.opGroupComparison,
+      'Content': t.opGroupContent,
+      'Range': t.opGroupRange,
+      'Collection': t.opGroupCollection,
+      'Boolean': t.opGroupBoolean,
+      'Existence': t.opGroupExistence,
+    };
+
+    const groupMap: { [opValue: string]: string } = {
+      '=': 'Comparison', '!=': 'Comparison', '==': 'Comparison', '<': 'Comparison', '>': 'Comparison', '<=': 'Comparison', '>=': 'Comparison',
+      'contains': 'Content', 'startsWith': 'Content', 'endsWith': 'Content', 'regex': 'Content',
+      'between': 'Range',
+      'in': 'Collection', 'notIn': 'Collection',
+      'isTrue': 'Boolean', 'isFalse': 'Boolean',
+      'isNull': 'Existence', 'isNotNull': 'Existence', 'isEmpty': 'Existence', 'isNotEmpty': 'Existence'
+    };
+    
+    const grouped: { [key: string]: Operator[] } = {};
+
+    for (const op of operators) {
+      const groupName = groupMap[op.value] || 'Other';
+      if (!grouped[groupName]) {
+        grouped[groupName] = [];
+      }
+      grouped[groupName].push(op);
+    }
+    
+    const groupOrder = ['Comparison', 'Content', 'Range', 'Collection', 'Boolean', 'Existence', 'Other'];
+
+    return groupOrder
+      .filter(groupName => grouped[groupName] && grouped[groupName].length > 0)
+      .map(groupName => ({
+        name: groupLabels[groupName] || groupName,
+        operators: grouped[groupName]
+      }));
   });
 
   onFieldChange(event: Event) {
@@ -172,18 +277,7 @@ export class RuleComponent {
     this.ruleChange.emit({ ...this.rule(), operator, value });
   }
 
-  onValueChange(event: Event) {
-    const inputElement = event.target as HTMLInputElement | HTMLSelectElement;
-    let value: any = inputElement.value;
-    
-    // Handle boolean specifically from select
-    if (this.selectedField()?.type === 'boolean') {
-        value = inputElement.value === 'true';
-    } else if (inputElement instanceof HTMLInputElement && inputElement.type === 'checkbox') {
-      value = inputElement.checked;
-    } else if (inputElement instanceof HTMLInputElement && inputElement.type === 'number' && this.config().parseNumbers) {
-      value = parseFloat(inputElement.value);
-    }
+  onValueChange(value: any) {
     this.ruleChange.emit({ ...this.rule(), value: value });
   }
 
@@ -199,19 +293,6 @@ export class RuleComponent {
 
     const value = source === 'expression' ? [] : undefined;
     this.ruleChange.emit({ ...this.rule(), valueSource: source, value });
-  }
-
-  onMultiSelectValueChange(event: Event) {
-    const selectedOptions = (event.target as HTMLSelectElement).selectedOptions;
-    const value = Array.from(selectedOptions).map(opt => opt.value);
-    this.ruleChange.emit({ ...this.rule(), value });
-  }
-
-  onBetweenValueChange(event: Event, index: 0 | 1) {
-    const inputElement = event.target as HTMLInputElement;
-    const currentValue = Array.isArray(this.rule().value) ? [...this.rule().value] : ['', ''];
-    currentValue[index] = inputElement.value;
-    this.ruleChange.emit({ ...this.rule(), value: currentValue });
   }
 
   private defaultValueForType(field: Field | undefined, operator: string): any {
@@ -234,5 +315,9 @@ export class RuleComponent {
 
   onExpressionChange(tokens: ExpressionToken[]) {
     this.ruleChange.emit({ ...this.rule(), value: tokens });
+  }
+
+  private capitalize(s: string): string {
+    return s.charAt(0).toUpperCase() + s.slice(1);
   }
 }

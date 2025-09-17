@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, signal, WritableSignal, inject, Renderer2, effect, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Renderer2, effect, computed, OnInit } from '@angular/core';
 import { QueryBuilderComponent } from './components/query-builder/query-builder.component';
 import { Rule, RuleGroup } from './models/query-builder.models';
 import { TranslationService, Language } from './services/translation.service';
 import { OptionsPanelComponent } from './components/options-panel/options-panel.component';
 import { QueryPreviewComponent } from './components/query-preview/query-preview.component';
 import { localSignal } from './utils/local-signal';
+import { HistoryService } from './services/history.service';
 
 export interface AppConfig {
   addRuleToNewGroups: boolean;
@@ -38,8 +39,9 @@ export interface AppConfig {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [QueryBuilderComponent, OptionsPanelComponent, QueryPreviewComponent],
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   translationService = inject(TranslationService);
+  historyService = inject(HistoryService);
   t = this.translationService.t;
   private renderer = inject(Renderer2);
   
@@ -123,7 +125,7 @@ export class AppComponent {
     useValidation: true,
   };
 
-  config: WritableSignal<AppConfig> = localSignal<AppConfig>(this.initialConfig, 'query-builder-config');
+  config = localSignal<AppConfig>(this.initialConfig, 'query-builder-config');
   
   configOptions = computed(() => {
     const translations = this.t();
@@ -138,7 +140,9 @@ export class AppComponent {
     });
   });
 
-  query: WritableSignal<RuleGroup> = signal(this.initialQuery);
+  query = this.historyService.query;
+  canUndo = this.historyService.canUndo;
+  canRedo = this.historyService.canRedo;
   
   constructor() {
     effect(() => {
@@ -156,6 +160,10 @@ export class AppComponent {
     });
   }
 
+  ngOnInit() {
+    this.historyService.init(this.initialQuery);
+  }
+
   onConfigChange({ key, checked }: { key: keyof AppConfig, checked: boolean }) {
     this.config.update(c => ({ ...c, [key]: checked }));
   }
@@ -169,6 +177,14 @@ export class AppComponent {
   }
 
   onQueryChange(updatedQuery: RuleGroup) {
-    this.query.set(updatedQuery);
+    this.historyService.addState(updatedQuery);
+  }
+
+  onUndo() {
+    this.historyService.undo();
+  }
+
+  onRedo() {
+    this.historyService.redo();
   }
 }

@@ -27,6 +27,8 @@ export const translations = {
     shiftUp: 'Shift Up',
     shiftDown: 'Shift Down',
     drag: 'Drag to reorder',
+    undo: 'Undo',
+    redo: 'Redo',
     emptyGroup: 'No rules in this group. Add a rule or group to get started.',
     valueSourceTooltip: 'Toggle between a literal value and a comparison to another field.',
     valueSourceValueTooltip: 'Use a literal value',
@@ -39,6 +41,10 @@ export const translations = {
 
 
     // Table Rule Specific
+    selectField: 'Select field',
+    selectOperator: 'Select operator',
+    aggregationOfColumn: 'of column',
+    columnPrefix: 'Column:',
     tableAggregation: 'Aggregation',
     tableRowCondition: 'Row Condition',
     quantifierAll: 'All',
@@ -81,6 +87,15 @@ export const translations = {
     genderFemale: 'Female',
     genderOther: 'Other',
     
+    // Field Type Groups
+    fieldTypeString: 'Text',
+    fieldTypeTextArea: 'Long Text',
+    fieldTypeNumber: 'Number',
+    fieldTypeDate: 'Date',
+    fieldTypeBoolean: 'Boolean',
+    fieldTypeSelect: 'List',
+    fieldTypeTable: 'Table',
+
     // Operators - keys match operatorDefs in query-data.service
     opEquals: '=',
     opDoubleEquals: '==',
@@ -107,6 +122,14 @@ export const translations = {
     opMultiply: '*',
     opDivide: '/',
     
+    // Operator Groups
+    opGroupComparison: 'Comparison',
+    opGroupContent: 'Content',
+    opGroupRange: 'Range',
+    opGroupCollection: 'Collection',
+    opGroupBoolean: 'Boolean',
+    opGroupExistence: 'Existence',
+
     // Aggregation Operators
     aggSum: 'Sum',
     aggCount: 'Count',
@@ -196,6 +219,8 @@ export const translations = {
     shiftUp: 'הזז למעלה',
     shiftDown: 'הזז למטה',
     drag: 'גרור לסידור מחדש',
+    undo: 'בטל',
+    redo: 'בצע שוב',
     emptyGroup: 'אין חוקים בקבוצה זו. יש להוסיף חוק או קבוצה כדי להתחיל.',
     valueSourceTooltip: 'החלף בין ערך קבוע להשוואה לשדה אחר.',
     valueSourceValueTooltip: 'השתמש בערך קבוע',
@@ -207,6 +232,10 @@ export const translations = {
     removeToken: 'הסר אסימון',
 
     // Table Rule Specific
+    selectField: 'בחר שדה',
+    selectOperator: 'בחר אופרטור',
+    aggregationOfColumn: 'של עמודה',
+    columnPrefix: 'עמודה:',
     tableAggregation: 'צבירה (אגרגציה)',
     tableRowCondition: 'תנאי שורה',
     quantifierAll: 'כל',
@@ -250,6 +279,15 @@ export const translations = {
     genderFemale: 'נקבה',
     genderOther: 'אחר',
     
+    // Field Type Groups
+    fieldTypeString: 'טקסט',
+    fieldTypeTextArea: 'טקסט ארוך',
+    fieldTypeNumber: 'מספר',
+    fieldTypeDate: 'תאריך',
+    fieldTypeBoolean: 'בוליאני',
+    fieldTypeSelect: 'רשימה',
+    fieldTypeTable: 'טבלה',
+
     // Operators
     opEquals: '=',
     opDoubleEquals: '==',
@@ -275,6 +313,14 @@ export const translations = {
     opMinus: '-',
     opMultiply: '*',
     opDivide: '/',
+
+    // Operator Groups
+    opGroupComparison: 'השוואה',
+    opGroupContent: 'תוכן',
+    opGroupRange: 'טווח',
+    opGroupCollection: 'אוסף',
+    opGroupBoolean: 'בוליאני',
+    opGroupExistence: 'קיום',
 
     // Aggregation Operators
     aggSum: 'סכום',

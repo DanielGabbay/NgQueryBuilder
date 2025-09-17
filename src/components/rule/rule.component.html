@@ -2,9 +2,18 @@
   <div class="flex items-start gap-2">
     <!-- Field Selector -->
     <select (change)="onFieldChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 self-start" [class.w-48]="selectedField()?.type !== 'table'">
-      <option value="" disabled>{{'Select field'}}</option>
-      @for (field of fields(); track field.value) {
-        <option [value]="field.value" [selected]="field.value === rule().field">{{ field.label }}</option>
+      <option value="" disabled [selected]="!rule().field">{{ t().selectField }}</option>
+      @for (group of groupedFields(); track group.name) {
+        <optgroup [label]="group.name">
+          @for (field of group.fields; track field.value) {
+            <option [value]="field.value" [selected]="field.value === rule().field">
+              @if (field.group) {
+                {{ t().columnPrefix }}&nbsp;
+              }
+              {{ field.label }}&nbsp;({{ field.type }})
+            </option>
+          }
+        </optgroup>
       }
     </select>
 
@@ -55,18 +64,22 @@
                 }
               </select>
 
-              <span class="text-gray-400 dark:text-gray-500">(</span>
+              <span class="text-gray-600 dark:text-gray-400 px-1">{{ t().aggregationOfColumn }}</span>
+              
               <select (change)="onColumnChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400">
                 @for(col of tableColumns(); track col.value) {
                   <option [value]="col.value" [selected]="col.value === rule().column">{{ col.label }}</option>
                 }
               </select>
-              <span class="text-gray-400 dark:text-gray-500">)</span>
 
               <select (change)="onOperatorChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 w-40">
-                <option value="" disabled>{{ 'Select operator' }}</option>
-                @for (operator of availableOperators(); track operator.value) {
-                  <option [value]="operator.value" [selected]="operator.value === rule().operator">{{ operator.label }}</option>
+                <option value="" disabled [selected]="!rule().operator">{{ t().selectOperator }}</option>
+                @for (group of groupedAvailableOperators(); track group.name) {
+                  <optgroup [label]="group.name">
+                    @for (operator of group.operators; track operator.value) {
+                      <option [value]="operator.value" [selected]="operator.value === rule().operator">{{ operator.label }}</option>
+                    }
+                  </optgroup>
                 }
               </select>
               
@@ -77,14 +90,19 @@
                     <i class="fa-solid" [class]="rule().valueSource === 'field' ? 'fa-at' : 'fa-hashtag'"></i>
                   </button>
                   @if (rule().valueSource === 'field') {
-                    <select (change)="onValueChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 flex-grow">
+                    <select (change)="onValueChange($event.target.value)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 flex-grow">
                         <option value="" disabled>{{'Select field'}}</option>
                         @for (field of comparisonFields(); track field.value) {
                             <option [value]="field.value" [selected]="field.value === rule().value">{{ field.label }}</option>
                         }
                     </select>
                   } @else {
-                    <input type="number" [value]="rule().value ?? ''" (input)="onValueChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 flex-grow" />
+                    <app-rule-value-input
+                      [rule]="rule()"
+                      [field]="aggregationResultField()"
+                      [config]="config()"
+                      (valueChange)="onValueChange($event)">
+                    </app-rule-value-input>
                   }
                 </div>
               }
@@ -95,9 +113,13 @@
         <!-- STANDARD RULE BUILDER -->
         <div class="flex w-full items-start gap-2">
           <select (change)="onOperatorChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 w-40 self-start">
-            <option value="" disabled>{{ 'Select operator' }}</option>
-            @for (operator of availableOperators(); track operator.value) {
-              <option [value]="operator.value" [selected]="operator.value === rule().operator">{{ operator.label }}</option>
+            <option value="" disabled [selected]="!rule().operator">{{ t().selectOperator }}</option>
+            @for (group of groupedAvailableOperators(); track group.name) {
+              <optgroup [label]="group.name">
+                @for (operator of group.operators; track operator.value) {
+                  <option [value]="operator.value" [selected]="operator.value === rule().operator">{{ operator.label }}</option>
+                }
+              </optgroup>
             }
           </select>
           
@@ -119,7 +141,7 @@
                 </div>
 
               @if (rule().valueSource === 'field') {
-                <select (change)="onValueChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 flex-grow self-start">
+                <select (change)="onValueChange($event.target.value)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 flex-grow self-start">
                     <option value="" disabled>{{'Select field'}}</option>
                     @for (field of comparisonFields(); track field.value) {
                         <option [value]="field.value" [selected]="field.value === rule().value">{{ field.label }}</option>
@@ -134,61 +156,12 @@
                 ></app-expression-builder>
               } @else {
                 <!-- Standard value inputs based on field type -->
-                <div class="flex-grow self-start">
-                  @switch (selectedField()?.type) {
-                    @case ('string') {
-                      <input type="text" [value]="rule().value ?? ''" (input)="onValueChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 w-full" />
-                    }
-                    @case ('textarea') {
-                      <textarea (input)="onValueChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 w-full h-16">{{rule().value ?? ''}}</textarea>
-                    }
-                    @case ('number') {
-                      <input type="number" [value]="rule().value ?? ''" (input)="onValueChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 w-full" />
-                    }
-                    @case ('boolean') {
-                      <div class="flex items-center h-full px-2">
-                        <input type="checkbox" [checked]="rule().value" (change)="onValueChange($event)" class="h-5 w-5 rounded bg-gray-200 dark:bg-gray-600 border-gray-300 dark:border-gray-500 text-blue-500 focus:ring-blue-500 focus:ring-offset-white dark:focus:ring-offset-gray-800" />
-                      </div>
-                    }
-                    @case ('date') {
-                      @if (rule().operator === 'between') {
-                        <div class="flex items-center space-x-2 rtl:space-x-reverse flex-grow">
-                          <input type="date" [value]="rule().value?.[0]" (input)="onBetweenValueChange($event, 0)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 w-full" />
-                          <i class="fa-solid fa-right-long text-gray-500 dark:text-gray-400 inline-block transform rtl:-scale-x-100"></i>
-                          <input type="date" [value]="rule().value?.[1]" (input)="onBetweenValueChange($event, 1)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 w-full" />
-                        </div>
-                      } @else {
-                        <input type="date" [value]="rule().value" (input)="onValueChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 w-full" />
-                      }
-                    }
-                    @case ('select') {
-                      @if ((rule().operator === 'in' || rule().operator === 'notIn') && selectedField()?.options?.length) {
-                        <select multiple (change)="onMultiSelectValueChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 w-full h-24">
-                          @for (option of selectedField()?.options; track option.value) {
-                            <option [value]="option.value" [selected]="rule().value?.includes(option.value)">
-                              {{ option.label }}
-                            </option>
-                          }
-                        </select>
-                      } @else if (selectedField()?.inputType === 'radio') {
-                        <div class="flex items-center gap-x-4 gap-y-2 p-2 flex-grow flex-wrap">
-                          @for (option of selectedField()?.options; track option.value) {
-                            <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">
-                              <input type="radio" [name]="rule().id + '-radio'" [value]="option.value" [checked]="rule().value === option.value" (change)="onValueChange($event)" class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500" />
-                              <span>{{ option.label }}</span>
-                            </label>
-                          }
-                        </div>
-                      } @else {
-                        <select (change)="onValueChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 w-full">
-                          @for (option of selectedField()?.options; track option.value) {
-                            <option [value]="option.value" [selected]="option.value === rule().value">{{ option.label }}</option>
-                          }
-                        </select>
-                      }
-                    }
-                  }
-                </div>
+                <app-rule-value-input
+                    [rule]="rule()"
+                    [field]="selectedField()"
+                    [config]="config()"
+                    (valueChange)="onValueChange($event)">
+                </app-rule-value-input>
               }
             </div>
           }
