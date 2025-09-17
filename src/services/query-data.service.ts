@@ -24,7 +24,8 @@ export class QueryDataService {
   private translationService = inject(TranslationService);
   private t = this.translationService.t;
   
-  private fieldDefs: FieldDefinition[] = [
+  // FIX: Made fieldDefs public to be accessible from other services.
+  public fieldDefs: FieldDefinition[] = [
     { value: 'firstName', labelKey: 'fieldFirstName', type: 'string' },
     { value: 'lastName', labelKey: 'fieldLastName', type: 'string' },
     { value: 'age', labelKey: 'fieldAge', type: 'number' },
@@ -54,14 +55,18 @@ export class QueryDataService {
       ]
     },
     { value: 'notes', labelKey: 'fieldNotes', type: 'textarea' },
+    { value: 'invoiceTotalSum', labelKey: 'fieldInvoiceTotalSum', type: 'number' },
     { value: "prod1", labelKey: "fieldItemTable", type: "table" },
     { labelKey: "fieldItemName", value: "item_name", type: "string", group: "prod1", values: ["קולה", "נייר טוואלט", "חלב"] },
-    { labelKey: "fieldUnitPrice", value: "unit_price", type: "number", group: "prod1", values: [10, 20, 30] },
-    { labelKey: "fieldAmount", value: "amount", type: "number", group: "prod1" }
+    { labelKey: "fieldUnitPrice", value: "unit_price", type: "number", group: "prod1" },
+    { labelKey: "fieldDiscountPerUnit", value: "discountPerUnit", type: "number", group: "prod1" },
+    { labelKey: "fieldQty", value: "qty", type: "number", group: "prod1" },
+    { labelKey: "fieldTotalAfterDiscount", value: "totalAfterDiscount", type: "number", group: "prod1" }
   ];
 
   private operatorDefs: OperatorDefinition[] = [
     { value: '=', labelKey: 'opEquals' }, { value: '!=', labelKey: 'opNotEquals' },
+    { value: '==', labelKey: 'opDoubleEquals' },
     { value: '<', labelKey: 'opLessThan' }, { value: '>', labelKey: 'opGreaterThan' },
     { value: '<=', labelKey: 'opLessThanOrEquals' }, { value: '>=', labelKey: 'opGreaterThanOrEquals' },
     { value: 'contains', labelKey: 'opContains' }, { value: 'startsWith', labelKey: 'opStartsWith' },
@@ -71,6 +76,11 @@ export class QueryDataService {
     { value: 'isFalse', labelKey: 'opIsFalse' }, { value: 'isNull', labelKey: 'opIsNull' },
     { value: 'isNotNull', labelKey: 'opIsNotNull' }, { value: 'isEmpty', labelKey: 'opIsEmpty' },
     { value: 'isNotEmpty', labelKey: 'opIsNotEmpty' },
+  ];
+  
+  private arithmeticOperatorDefs: OperatorDefinition[] = [
+    { value: '+', labelKey: 'opPlus' }, { value: '-', labelKey: 'opMinus' },
+    { value: '*', labelKey: 'opMultiply' }, { value: '/', labelKey: 'opDivide' },
   ];
 
   private aggregationOperatorDefs: OperatorDefinition[] = [
@@ -114,6 +124,7 @@ export class QueryDataService {
   });
   
   aggregationOperators = computed<Operator[]>(() => this.translateDefs(this.aggregationOperatorDefs));
+  arithmeticOperators = computed<Operator[]>(() => this.translateDefs(this.arithmeticOperatorDefs));
   
   // FIX: Corrected implementation to properly translate column definitions, including their `options` property, which was causing a type error. This now uses the `translateField` helper.
   getColumnsForTable(tableCode: string): Field[] {
@@ -125,7 +136,7 @@ export class QueryDataService {
   getOperatorsForField(fieldType: FieldType): Operator[] {
     const translatedOperators = this.translateDefs(this.operatorDefs);
     const nullChecks = ['isNull', 'isNotNull'];
-    const comparison = ['=', '!=', '<', '>', '<=', '>='];
+    const comparison = ['=', '!=', '<', '>', '<=', '>=', '=='];
 
     switch (fieldType) {
       case 'string':
@@ -143,7 +154,7 @@ export class QueryDataService {
           [...comparison, 'between', ...nullChecks].includes(o.value)
         );
       case 'boolean':
-        return translatedOperators.filter(o => ['=', '!=', 'isTrue', 'isFalse'].includes(o.value));
+        return translatedOperators.filter(o => ['=', '!=', '==', 'isTrue', 'isFalse'].includes(o.value));
       case 'table':
         return translatedOperators.filter(o => 
           [...comparison, 'between', 'in', 'notIn'].includes(o.value)

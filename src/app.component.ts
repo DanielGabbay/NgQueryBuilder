@@ -49,22 +49,53 @@ export class AppComponent {
     id: 'root',
     combinator: 'AND',
     rules: [
-      { id: 'r-1', field: 'firstName', operator: 'startsWith', value: 'Stev' },
-      { id: 'r-2', field: 'lastName', operator: 'in', value: 'Vai, Vaughan' },
-      { id: 'r-3', field: 'age', operator: '>', value: 28 },
-      { id: 'r-7', field: 'gender', operator: '=', value: 'Female' },
+      // Part 1: All rows must have a valid calculation for totalAfterDiscount
+      // Corresponds to: items.All(item => item.totalAfterDiscount == (item.unitPrice - item.discountPerUnit) * item.qty)
       {
-        id: 'g-1',
-        combinator: 'OR',
-        not: false,
-        rules: [
-          { id: 'r-4', field: 'isMusician', operator: '=', value: true },
-          { id: 'r-5', field: 'primaryInstrument', operator: 'in', value: ['Guitar', 'Piano'] },
-        ],
+        id: 'r-row-condition',
+        field: 'prod1', // The item table
+        operator: '',
+        value: null,
+        tableRuleType: 'rowCondition',
+        quantifier: 'all', // "items.All(...)"
+        rowRules: {
+          id: 'g-row-rules',
+          combinator: 'AND',
+          rules: [
+            // Interactive formula builder rule
+            {
+              id: 'rr-formula-check',
+              field: 'totalAfterDiscount',
+              operator: '==',
+              valueSource: 'expression',
+              value: [
+                { type: 'paren', value: '(' },
+                { type: 'field', value: 'unit_price' },
+                { type: 'operator', value: '-' },
+                { type: 'field', value: 'discountPerUnit' },
+                { type: 'paren', value: ')' },
+                { type: 'operator', value: '*' },
+                { type: 'field', value: 'qty' },
+              ]
+            },
+          ],
+          combinators: []
+        }
       },
-       { id: 'r-6', field: 'birthDate', operator: 'between', value: ['1954-10-03', '1960-06-06'] },
+      // Part 2: The sum of totals must match the invoice total
+      // Corresponds to: items.Sum(item => item.totalAfterDiscount) == invoice.totalSum
+      {
+        id: 'r-aggregation',
+        field: 'prod1', // The item table
+        tableRuleType: 'aggregation',
+        aggregation: 'sum',
+        column: 'totalAfterDiscount',
+        operator: '=',
+        value: 'invoiceTotalSum',
+        valueSource: 'field'
+      }
     ],
-    combinators: ['AND', 'AND', 'AND', 'AND', 'AND']
+    combinators: ['AND'] // For the 2 main rules
   };
 
   private readonly initialConfig: AppConfig = {

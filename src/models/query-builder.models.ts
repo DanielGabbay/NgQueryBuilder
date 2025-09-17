@@ -1,16 +1,31 @@
 export type FieldType = 'string' | 'number' | 'boolean' | 'date' | 'table' | 'select' | 'textarea';
 
 export type AggregationType = 'sum' | 'count' | 'avg' | 'min' | 'max';
-//'any' | 'all' | 'none' will be supported later
+export type QuantifierType = 'all' | 'any' | 'none';
+
+export interface ExpressionToken {
+  type: 'field' | 'operator' | 'paren';
+  value: string;
+}
 
 export interface Rule {
   id: string;
   field: string; // For a normal rule, this is the field code. For an aggregation, this is the table code.
   operator: string;
-  value: any;
+  value: any; // Can be a primitive or ExpressionToken[]
+  locked?: boolean;
+  valueSource?: 'value' | 'field' | 'expression';
+
+  // For table rules
+  tableRuleType?: 'aggregation' | 'rowCondition';
+
+  // For 'aggregation' type
   aggregation?: AggregationType;
   column?: string;
-  locked?: boolean;
+
+  // For 'rowCondition' type
+  quantifier?: QuantifierType;
+  rowRules?: RuleGroup;
 }
 
 export interface RuleGroup {

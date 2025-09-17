@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { isRuleGroup, Rule, RuleGroup, ValidationRule } from '../models/query-builder.models';
+import { isRuleGroup, Rule, RuleGroup, ValidationRule, ExpressionToken } from '../models/query-builder.models';
 import { QueryDataService } from './query-data.service';
 import { TranslationService } from './translation.service';
 
@@ -63,34 +63,67 @@ export class QueryTranslatorService {
   }
 
   private translateRule(rule: Rule): { rule: string, description: string } {
-    const operatorLabel = rule.operator; // For now, use the value
-
-    let ruleString = '';
-    let descriptionString = '';
     const t = this.translationService.t();
     
-    if (rule.aggregation && rule.column) {
-      const field = this.queryDataService.fields().find(f => f.value === rule.field);
-      const columnLabel = this.getColumnLabel(rule.field, rule.column);
-      
-      const aggText = t[('agg' + rule.aggregation.charAt(0).toUpperCase() + rule.aggregation.slice(1)) as keyof typeof t] || rule.aggregation;
-      
-      ruleString = `${rule.aggregation}(${rule.field}.${rule.column}) ${operatorLabel} ${this.formatValue(rule.value, rule.operator, true)}`;
-      descriptionString = `${aggText}${t.translatorOf}${columnLabel}${t.translatorIn}${field?.label} ${operatorLabel} ${this.formatValue(rule.value, rule.operator, false)}`;
+    const field = this.queryDataService.fields().find(f => f.value === rule.field);
 
+    if (field?.type === 'table') {
+        if (rule.tableRuleType === 'rowCondition' && rule.rowRules) {
+            const quantifierRule = rule.quantifier?.toUpperCase() || 'ALL';
+            
+            const quantifierDescKey = rule.quantifier ? ('quantifier' + rule.quantifier.charAt(0).toUpperCase() + rule.quantifier.slice(1)) : '';
+            const quantifierDesc = (t as any)[quantifierDescKey] || rule.quantifier || '';
+
+            const nestedTranslation = this.translateGroup(rule.rowRules);
+            const ruleString = `${rule.field}.${quantifierRule}(row => ${nestedTranslation.rule})`;
+            const descriptionString = `${quantifierDesc} ${t.rowsIn} ${field.label} ${t.match}: ${nestedTranslation.description}`;
+            return { rule: ruleString, description: descriptionString };
+        } else { // Aggregation
+            const columnLabel = this.getColumnLabel(rule.field, rule.column || '');
+            
+            const aggTextKey = rule.aggregation ? ('agg' + rule.aggregation.charAt(0).toUpperCase() + rule.aggregation.slice(1)) : '';
+            const aggText = (t as any)[aggTextKey] || rule.aggregation || '';
+
+            const formattedValue = this.formatValue(rule, false);
+            const ruleValue = this.formatValue(rule, true);
+            
+            const ruleString = `${rule.aggregation}(${rule.field}.${rule.column}) ${rule.operator} ${ruleValue}`;
+            const descriptionString = `${aggText}${t.translatorOf}${columnLabel}${t.translatorIn}${field.label} ${rule.operator} ${formattedValue}`;
+            return { rule: ruleString, description: descriptionString };
+        }
     } else {
       const fieldLabel = this.getFieldLabel(rule.field);
-      ruleString = `${rule.field} ${operatorLabel} ${this.formatValue(rule.value, rule.operator, true)}`;
-      descriptionString = `${fieldLabel} ${operatorLabel} ${this.formatValue(rule.value, rule.operator, false)}`;
+      const ruleString = `${rule.field} ${rule.operator} ${this.formatValue(rule, true)}`;
+      const descriptionString = `${fieldLabel} ${rule.operator} ${this.formatValue(rule, false)}`;
+      return { rule: ruleString, description: descriptionString };
     }
-    
-    return { rule: ruleString, description: descriptionString };
   }
   
-  private formatValue(value: any, operator: string, forRule = true): string {
-    if (Array.isArray(value)) {
-        return `(${value.map(v => this.formatValue(v, operator, forRule)).join(', ')})`;
+  private formatValue(rule: Rule, forRule = true): string {
+    if (rule.valueSource === 'field') {
+        return forRule ? rule.value : (this.getFieldLabel(rule.value) || rule.value);
     }
+    if (rule.valueSource === 'expression') {
+      const tokens = rule.value as ExpressionToken[];
+      return tokens.map(token => {
+        if (token.type === 'field') {
+          return forRule ? token.value : this.getFieldLabel(token.value);
+        }
+        return token.value;
+      }).join(' ');
+    }
+    
+    const value = rule.value;
+    const operator = rule.operator;
+
+    if (Array.isArray(value)) {
+        return `(${value.map(v => this.formatSingleValue(v, operator, forRule)).join(', ')})`;
+    }
+    
+    return this.formatSingleValue(value, operator, forRule);
+  }
+  
+  private formatSingleValue(value: any, operator: string, forRule: boolean): string {
     if (typeof value === 'string' && forRule) {
       if (operator === 'in' || operator === 'notIn') {
         const arr = value.split(',').map(s => s.trim());
@@ -104,8 +137,15 @@ export class QueryTranslatorService {
     return value.toString();
   }
   
+  // FIX: Rewrote method to correctly find the label for any field (top-level or column)
+  // by searching all field definitions and translating the label.
   private getFieldLabel(fieldValue: string): string {
-    return this.queryDataService.fields().find(f => f.value === fieldValue)?.label ?? fieldValue;
+    const fieldDef = this.queryDataService.fieldDefs.find(f => f.value === fieldValue);
+    if (fieldDef) {
+      const t = this.translationService.t();
+      return (t as any)[fieldDef.labelKey] || fieldDef.labelKey;
+    }
+    return fieldValue;
   }
   
   private getColumnLabel(tableValue: string, columnValue: string): string {

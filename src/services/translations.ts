@@ -28,6 +28,25 @@ export const translations = {
     shiftDown: 'Shift Down',
     drag: 'Drag to reorder',
     emptyGroup: 'No rules in this group. Add a rule or group to get started.',
+    valueSourceTooltip: 'Toggle between a literal value and a comparison to another field.',
+    valueSourceValueTooltip: 'Use a literal value',
+    valueSourceFieldTooltip: 'Compare with another field',
+    expressionBuilderTooltip: 'Open the expression builder for complex calculations.',
+    addField: '+ Field',
+    addOperator: '+ Operator',
+    emptyExpression: 'Build your expression...',
+    removeToken: 'Remove token',
+
+
+    // Table Rule Specific
+    tableAggregation: 'Aggregation',
+    tableRowCondition: 'Row Condition',
+    quantifierAll: 'All',
+    quantifierAny: 'Any',
+    quantifierNone: 'None',
+    rowsMatch: 'rows match the following:',
+    rowsIn: 'rows in',
+    match: 'match',
 
     // Query Preview Component
     queryOutput: 'Query Output',
@@ -47,7 +66,10 @@ export const translations = {
     fieldItemTable: 'Item Table',
     fieldItemName: 'Item Name',
     fieldUnitPrice: 'Unit Price',
-    fieldAmount: 'Amount',
+    fieldDiscountPerUnit: 'Discount Per Unit',
+    fieldQty: 'Quantity',
+    fieldTotalAfterDiscount: 'Total After Discount',
+    fieldInvoiceTotalSum: 'Invoice Total Sum',
 
     // Field Options
     instrumentGuitar: 'Guitar',
@@ -61,6 +83,7 @@ export const translations = {
     
     // Operators - keys match operatorDefs in query-data.service
     opEquals: '=',
+    opDoubleEquals: '==',
     opNotEquals: '!=',
     opLessThan: '<',
     opGreaterThan: '>',
@@ -79,6 +102,10 @@ export const translations = {
     opIsNotNull: 'is not null',
     opIsEmpty: 'is empty',
     opIsNotEmpty: 'is not empty',
+    opPlus: '+',
+    opMinus: '-',
+    opMultiply: '*',
+    opDivide: '/',
     
     // Aggregation Operators
     aggSum: 'Sum',
@@ -170,6 +197,24 @@ export const translations = {
     shiftDown: 'הזז למטה',
     drag: 'גרור לסידור מחדש',
     emptyGroup: 'אין חוקים בקבוצה זו. יש להוסיף חוק או קבוצה כדי להתחיל.',
+    valueSourceTooltip: 'החלף בין ערך קבוע להשוואה לשדה אחר.',
+    valueSourceValueTooltip: 'השתמש בערך קבוע',
+    valueSourceFieldTooltip: 'השווה לשדה אחר',
+    expressionBuilderTooltip: 'פתח את בונה הביטויים לחישובים מורכבים.',
+    addField: '+ הוסף שדה',
+    addOperator: '+ הוסף פעולה',
+    emptyExpression: 'יש לבנות את הביטוי...',
+    removeToken: 'הסר אסימון',
+
+    // Table Rule Specific
+    tableAggregation: 'צבירה (אגרגציה)',
+    tableRowCondition: 'תנאי שורה',
+    quantifierAll: 'כל',
+    quantifierAny: 'לפחות',
+    quantifierNone: 'אף',
+    rowsMatch: 'השורות מקיימות:',
+    rowsIn: 'שורות ב',
+    match: 'מקיימות',
 
     // Query Preview Component
     queryOutput: 'פלט השאילתה',
@@ -189,7 +234,11 @@ export const translations = {
     fieldItemTable: 'טבלת פריטים',
     fieldItemName: 'שם פריט',
     fieldUnitPrice: 'מחיר יחידה',
-    fieldAmount: 'כמות',
+    fieldDiscountPerUnit: 'הנחה ליחידה',
+    fieldQty: 'כמות',
+    fieldTotalAfterDiscount: 'סך הכל אחרי הנחה',
+    fieldInvoiceTotalSum: 'סכום חשבונית כולל',
+    
 
     // Field Options
     instrumentGuitar: 'גיטרה',
@@ -203,6 +252,7 @@ export const translations = {
     
     // Operators
     opEquals: '=',
+    opDoubleEquals: '==',
     opNotEquals: '!=',
     opLessThan: '<',
     opGreaterThan: '>',
@@ -221,6 +271,10 @@ export const translations = {
     opIsNotNull: 'אינו ריק',
     opIsEmpty: 'ריק (is empty)',
     opIsNotEmpty: 'אינו ריק (is not empty)',
+    opPlus: '+',
+    opMinus: '-',
+    opMultiply: '*',
+    opDivide: '/',
 
     // Aggregation Operators
     aggSum: 'סכום',

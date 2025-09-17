@@ -87,12 +87,14 @@
               <app-query-builder 
                 [group]="rule"
                 [config]="config()"
+                [fields]="contextFields()"
                 [level]="level() + 1"
                 (queryChange)="updateRule($event, i)" />
             } @else {
               <app-rule 
                 [rule]="rule"
                 [config]="config()"
+                [fields]="contextFields()"
                 (ruleChange)="updateRule($event, i)" />
             }
           </div>
