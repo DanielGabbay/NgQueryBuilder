@@ -58,7 +58,7 @@
 
       <!-- Query Builder -->
       <main class="bg-white dark:bg-gray-800 p-2 sm:p-4 rounded-lg shadow-2xl">
-        <app-query-builder 
+        <ngqb-query-builder 
           [group]="query()"
           [config]="config()"
           (queryChange)="onQueryChange($event)" />

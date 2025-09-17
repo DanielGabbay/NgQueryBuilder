@@ -1,36 +1,15 @@
 import { ChangeDetectionStrategy, Component, inject, Renderer2, effect, computed, OnInit } from '@angular/core';
-import { QueryBuilderComponent } from './components/query-builder/query-builder.component';
-import { Rule, RuleGroup } from './models/query-builder.models';
+// Import from the library
+import { QueryBuilderComponent, QueryBuilderConfig, DEFAULT_QUERY_BUILDER_CONFIG } from '../projects/ng-query-builder/src/public-api';
+import { Rule, RuleGroup } from '../projects/ng-query-builder/src/public-api';
 import { TranslationService, Language } from './services/translation.service';
 import { OptionsPanelComponent } from './components/options-panel/options-panel.component';
 import { QueryPreviewComponent } from './components/query-preview/query-preview.component';
 import { localSignal } from './utils/local-signal';
 import { HistoryService } from './services/history.service';
 
-export interface AppConfig {
-  addRuleToNewGroups: boolean;
-  autoSelectField: boolean;
-  autoSelectOperator: boolean;
-  autoSelectValue: boolean;
-  combinatorsBetweenRules: boolean;
-  debugMode: boolean;
-  disabled: boolean;
-  dragAndDropEnabled: boolean;
-  independentCombinators: boolean;
-  justifiedLayout: boolean;
-  listsAsArrays: boolean;
-  parseNumbers: boolean;
-  resetOnFieldChange: boolean;
-  showNotToggle: boolean;
-  showBranches: boolean;
-  showCloneButtons: boolean;
-  showLockButtons: boolean;
-  showShiftActions: boolean;
-  showQueryPreview: boolean;
-  suppressStandardClasses: boolean;
-  useDateTimePackage: boolean;
-  useValidation: boolean;
-}
+// Use the library config interface instead
+export interface AppConfig extends QueryBuilderConfig {}
 
 
 @Component({
@@ -101,28 +80,9 @@ export class AppComponent implements OnInit {
   };
 
   private readonly initialConfig: AppConfig = {
-    addRuleToNewGroups: false,
-    autoSelectField: true,
-    autoSelectOperator: true,
-    autoSelectValue: false,
+    ...DEFAULT_QUERY_BUILDER_CONFIG,
     combinatorsBetweenRules: true,
-    debugMode: false,
-    disabled: false,
-    dragAndDropEnabled: true,
-    independentCombinators: true,
-    justifiedLayout: false,
-    listsAsArrays: false,
-    parseNumbers: false,
-    resetOnFieldChange: true,
-    showNotToggle: true,
-    showBranches: true,
-    showCloneButtons: true,
-    showLockButtons: true,
     showShiftActions: false, // Disabled to simplify UI
-    showQueryPreview: true,
-    suppressStandardClasses: false,
-    useDateTimePackage: true,
-    useValidation: true,
   };
 
   config = localSignal<AppConfig>(this.initialConfig, 'query-builder-config');

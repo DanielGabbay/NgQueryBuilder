@@ -1,0 +1,172 @@
+<fieldset [disabled]="rule().locked" class="w-full" [class.bg-black/10]="rule().locked" [class.dark:bg-black/20]="rule().locked" [class.rounded-md]="rule().locked">
+  <div class="flex items-start gap-2">
+    <!-- Field Selector -->
+    <select (change)="onFieldChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 self-start" [class.w-48]="selectedField()?.type !== 'table'">
+      <option value="" disabled [selected]="!rule().field">{{ t().selectField }}</option>
+      @for (group of groupedFields(); track group.name) {
+        <optgroup [label]="group.name">
+          @for (field of group.fields; track field.value) {
+            <option [value]="field.value" [selected]="field.value === rule().field">
+              @if (field.group) {
+                {{ t().columnPrefix }}&nbsp;
+              }
+              {{ field.label }}&nbsp;({{ field.type }})
+            </option>
+          }
+        </optgroup>
+      }
+    </select>
+
+    <!-- UI for different field types -->
+    <div class="flex-grow">
+      @if (selectedField()?.type === 'table') {
+        <!-- TABLE RULE BUILDER -->
+        <div class="flex flex-col gap-2">
+          <!-- Table Rule Type Selector -->
+          <div class="flex items-center gap-4 bg-gray-100 dark:bg-gray-700/50 p-1 rounded-md">
+            <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">
+              <input type="radio" [name]="rule().id + '-table-type'" [checked]="rule().tableRuleType === 'aggregation' || !rule().tableRuleType" (change)="onTableRuleTypeChange('aggregation')" class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500">
+              <span>{{ t().tableAggregation }}</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">
+              <input type="radio" [name]="rule().id + '-table-type'" [checked]="rule().tableRuleType === 'rowCondition'" (change)="onTableRuleTypeChange('rowCondition')" class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500">
+              <span>{{ t().tableRowCondition }}</span>
+            </label>
+          </div>
+
+          @if (rule().tableRuleType === 'rowCondition') {
+            <!-- ROW CONDITION BUILDER -->
+            <div class="flex items-center gap-2">
+              <select (change)="onQuantifierChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                @for(q of quantifiers(); track q.value) {
+                  <option [value]="q.value" [selected]="q.value === rule().quantifier">{{ q.label }}</option>
+                }
+              </select>
+              <span class="text-gray-600 dark:text-gray-400">{{ t().rowsMatch }}</span>
+            </div>
+            @if(rule().rowRules; as rowRules) {
+                <div class="border-s-2 border-blue-500/50 ps-4 py-2">
+                    <ngqb-query-builder
+                        [group]="rowRules"
+                        [config]="config()"
+                        [level]="-1" 
+                        [fields]="tableColumns()"
+                        (queryChange)="onRowRulesChange($event)"
+                    ></ngqb-query-builder>
+                </div>
+            }
+          } @else {
+            <!-- AGGREGATION BUILDER -->
+            <div class="flex w-full items-center gap-2">
+              <select (change)="onAggregationChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 w-28 font-medium text-blue-600 dark:text-blue-400">
+                @for(op of aggregationOperators(); track op.value) {
+                  <option [value]="op.value" [selected]="op.value === rule().aggregation">{{ op.label }}</option>
+                }
+              </select>
+
+              <span class="text-gray-600 dark:text-gray-400 px-1">{{ t().aggregationOfColumn }}</span>
+              
+              <select (change)="onColumnChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400">
+                @for(col of tableColumns(); track col.value) {
+                  <option [value]="col.value" [selected]="col.value === rule().column">{{ col.label }}</option>
+                }
+              </select>
+
+              <select (change)="onOperatorChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 w-40">
+                <option value="" disabled [selected]="!rule().operator">{{ t().selectOperator }}</option>
+                @for (group of groupedAvailableOperators(); track group.name) {
+                  <optgroup [label]="group.name">
+                    @for (operator of group.operators; track operator.value) {
+                      <option [value]="operator.value" [selected]="operator.value === rule().operator">{{ operator.label }}</option>
+                    }
+                  </optgroup>
+                }
+              </select>
+              
+              @if (showValueInput()) {
+                <div class="flex items-center gap-1 flex-grow">
+                  <!-- Value Source Toggle -->
+                  <button (click)="onValueSourceChange(rule().valueSource === 'field' ? 'value' : 'field')" class="w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-600 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500" [title]="t().valueSourceTooltip">
+                    <i class="fa-solid" [class]="rule().valueSource === 'field' ? 'fa-at' : 'fa-hashtag'"></i>
+                  </button>
+                  @if (rule().valueSource === 'field') {
+                    <select (change)="onSelectChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 flex-grow">
+                        <option value="" disabled>{{'Select field'}}</option>
+                        @for (field of comparisonFields(); track field.value) {
+                            <option [value]="field.value" [selected]="field.value === rule().value">{{ field.label }}</option>
+                        }
+                    </select>
+                  } @else {
+                    <ngqb-rule-value-input
+                      [rule]="rule()"
+                      [field]="aggregationResultField()"
+                      [config]="config()"
+                      (valueChange)="onValueChange($event)">
+                    </ngqb-rule-value-input>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <!-- STANDARD RULE BUILDER -->
+        <div class="flex w-full items-start gap-2">
+          <select (change)="onOperatorChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:disabled:bg-gray-800 dark:disabled:text-gray-400 w-40 self-start">
+            <option value="" disabled [selected]="!rule().operator">{{ t().selectOperator }}</option>
+            @for (group of groupedAvailableOperators(); track group.name) {
+              <optgroup [label]="group.name">
+                @for (operator of group.operators; track operator.value) {
+                  <option [value]="operator.value" [selected]="operator.value === rule().operator">{{ operator.label }}</option>
+                }
+              </optgroup>
+            }
+          </select>
+          
+          @if (showValueInput()) {
+            <div class="flex items-start gap-1 flex-grow">
+               <!-- Value Source Toggle -->
+                <div class="flex flex-col gap-1 self-start">
+                  <button (click)="onValueSourceChange('value')" [class]="'w-7 h-7 flex items-center justify-center rounded-md ' + ((!rule().valueSource || rule().valueSource === 'value') ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500')" [title]="t().valueSourceValueTooltip">
+                    <i class="fa-solid fa-hashtag"></i>
+                  </button>
+                  <button (click)="onValueSourceChange('field')" [class]="'w-7 h-7 flex items-center justify-center rounded-md ' + (rule().valueSource === 'field' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500')" [title]="t().valueSourceFieldTooltip">
+                    <i class="fa-solid fa-at"></i>
+                  </button>
+                  @if (showExpressionBuilderToggle()) {
+                    <button (click)="onValueSourceChange('expression')" [class]="'w-7 h-7 flex items-center justify-center rounded-md ' + (rule().valueSource === 'expression' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500')" [title]="t().expressionBuilderTooltip">
+                      <i class="fa-solid fa-calculator"></i>
+                    </button>
+                  }
+                </div>
+
+              @if (rule().valueSource === 'field') {
+                <select (change)="onSelectChange($event)" class="bg-gray-100 border border-gray-300 text-gray-800 rounded-md shadow-sm px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 flex-grow self-start">
+                    <option value="" disabled>{{'Select field'}}</option>
+                    @for (field of comparisonFields(); track field.value) {
+                        <option [value]="field.value" [selected]="field.value === rule().value">{{ field.label }}</option>
+                    }
+                </select>
+              } @else if (rule().valueSource === 'expression') {
+                <ngqb-expression-builder
+                  [expression]="rule().value"
+                  [fields]="expressionFields()"
+                  [arithmeticOperators]="arithmeticOperators()"
+                  (expressionChange)="onExpressionChange($event)"
+                ></ngqb-expression-builder>
+              } @else {
+                <!-- Standard value inputs based on field type -->
+                <ngqb-rule-value-input
+                    [rule]="rule()"
+                    [field]="selectedField()"
+                    [config]="config()"
+                    (valueChange)="onValueChange($event)">
+                </ngqb-rule-value-input>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</fieldset>

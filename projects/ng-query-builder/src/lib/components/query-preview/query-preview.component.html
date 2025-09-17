@@ -1,0 +1,17 @@
+<div class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-2xl mt-8">
+  <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">{{ t().queryOutput }}</h2>
+  
+  <div class="space-y-4">
+    <div>
+      <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{{ t().humanReadable }}</h3>
+      <p class="p-3 bg-gray-100 dark:bg-gray-700/50 rounded-md text-gray-800 dark:text-gray-200 text-sm min-h-[44px] flex items-center">
+        {{ translatedQuery().description || t().noRulesToDisplay }}
+      </p>
+    </div>
+    
+    <div>
+      <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">{{ t().ruleString }}</h3>
+      <pre class="p-3 bg-gray-900 rounded-md text-gray-100 text-xs overflow-x-auto min-h-[40px] flex items-center"><code>{{ translatedQuery().rule || t().noRulesToDisplay }}</code></pre>
+    </div>
+  </div>
+</div>

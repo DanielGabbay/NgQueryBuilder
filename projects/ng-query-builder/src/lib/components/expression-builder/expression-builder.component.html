@@ -1,0 +1,38 @@
+<div class="flex-grow p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-900/50">
+  <!-- Expression Tokens -->
+  <div class="flex flex-wrap items-center gap-1 min-h-[30px] bg-white dark:bg-gray-800 p-2 rounded-md">
+    @for(token of expression(); track $index) {
+      <div class="relative group px-2 py-1 text-sm rounded-md flex items-center gap-1"
+        [class.bg-blue-100]="token.type === 'field'" [class.dark:bg-blue-900/50]="token.type === 'field'"
+        [class.text-blue-800]="token.type === 'field'" [class.dark:text-blue-200]="token.type === 'field'"
+        [class.bg-green-100]="token.type === 'operator'" [class.dark:bg-green-900/50]="token.type === 'operator'"
+        [class.text-green-800]="token.type === 'operator'" [class.dark:text-green-200]="token.type === 'operator'"
+        [class.bg-gray-200]="token.type === 'paren'" [class.dark:bg-gray-700]="token.type === 'paren'"
+        [class.font-mono]="token.type !== 'field'">
+        {{ getTokenLabel(token) }}
+        <button (click)="removeToken($index)" [title]="t().removeToken" class="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-red-500 text-white text-xs items-center justify-center hidden group-hover:flex">
+          &times;
+        </button>
+      </div>
+    } @empty {
+      <span class="text-xs text-gray-500 italic">{{ t().emptyExpression }}</span>
+    }
+  </div>
+  <!-- Add Token Controls -->
+  <div class="flex items-center gap-2 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+    <select #fieldSelect (change)="addToken('field', fieldSelect.value); fieldSelect.value=''" class="bg-gray-200 dark:bg-gray-700 text-xs rounded px-2 py-1">
+      <option value="" disabled selected>{{ t().addField }}</option>
+      @for (field of fields(); track field.value) {
+        <option [value]="field.value">{{ field.label }}</option>
+      }
+    </select>
+    <select #opSelect (change)="addToken('operator', opSelect.value); opSelect.value=''" class="bg-gray-200 dark:bg-gray-700 text-xs rounded px-2 py-1">
+      <option value="" disabled selected>{{ t().addOperator }}</option>
+       @for (op of arithmeticOperators(); track op.value) {
+        <option [value]="op.value">{{ op.label }}</option>
+      }
+    </select>
+    <button (click)="addToken('paren', '(')" class="bg-gray-200 dark:bg-gray-700 text-xs rounded px-2 py-1 font-mono">(</button>
+    <button (click)="addToken('paren', ')')" class="bg-gray-200 dark:bg-gray-700 text-xs rounded px-2 py-1 font-mono">)</button>
+  </div>
+</div>
